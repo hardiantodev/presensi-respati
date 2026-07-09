@@ -20,36 +20,37 @@ const settings = {
     },
 
     async loadSettings() {
-    try {
-        const [settingsResult, shiftsResult] = await Promise.all([
-            api.getSettings(),
-            api.getShifts()
-        ]);
+        try {
+            const [settingsResult, shiftsResult] = await Promise.all([
+                api.getSettings(),
+                api.getShifts()
+            ]);
 
-        // Pastikan hasil valid
-        if (settingsResult.data) {
-            const allSettings = settingsResult.data;
-            
-            // Simpan ke localStorage untuk update cache agar perangkat lain sinkron
-            storage.set('company', { 
-                name: allSettings.company_name, 
-                logo: allSettings.company_logo 
-            });
+            // Fix shift times - Google Sheets converts "08:00" to Date objects
+            this.shifts = (shiftsResult.data || []).map(shift => ({
+                ...shift,
+                startTime: this.normalizeTime(shift.startTime),
+                endTime: this.normalizeTime(shift.endTime)
+            }));
 
-            // Update UI langsung dari hasil API (bukan localStorage)
+            const allSettings = settingsResult.data || {};
+
+            // Company info
             const companyName = document.getElementById('company-name');
+            const companyLogo = document.getElementById('company-logo');
             if (companyName) companyName.value = allSettings.company_name || '';
-            
-            // ... (lanjutkan untuk elemen lainnya)
-        }
-        
-        // ... (lanjutkan untuk renderShifts)
+            if (companyLogo) companyLogo.value = allSettings.company_logo || '';
 
-    } catch (error) {
-        console.error('Error fetching fresh data:', error);
-        toast.error('Gagal memuat pengaturan terbaru dari server.');
-    }
-},
+            // Working days
+            const workdays = allSettings.working_days ? JSON.parse(allSettings.working_days) : null;
+            if (workdays) {
+                const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+                days.forEach(day => {
+                    const el = document.getElementById(`day-${day}`);
+                    if (el) el.checked = workdays[day] !== false;
+                });
+            }
+
             // System settings
             if (allSettings.late_tolerance !== undefined) {
                 const el = document.getElementById('setting-late-tolerance');
