@@ -20,7 +20,10 @@ const api = {
         }
 
         try {
-            const response = await fetch(API_BASE_URL, {
+             const timestamp = new Date().getTime();
+             const urlWithCacheBust = `${API_BASE_URL}?t=${timestamp}`;
+
+             const response = await fetch(urlWithCacheBust, {
                 method: 'POST',
                 redirect: 'follow',
                 headers: { 'Content-Type': 'text/plain' },
@@ -40,6 +43,7 @@ const api = {
             return this._localFallback(action, data);
         }
     },
+  
 
     // ========== AUTH ==========
 
