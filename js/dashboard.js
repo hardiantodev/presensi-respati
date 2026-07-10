@@ -218,3 +218,25 @@ setInterval(() => {
         dashboard.updateProgressBar();
     }
 }, 60000);
+
+// Tambahkan ini di dalam objek dashboard
+async refreshData() {
+    console.log("Mengecek pembaruan data...");
+    await this.loadData(); // Ambil data terbaru dari API/Sheet
+    
+    // Perbarui semua elemen UI
+    this.updateWelcomeCard();
+    this.updateStats();
+    this.updateSessionInfo();
+    this.updateProgressBar();
+    console.log("Dashboard berhasil diperbarui!");
+},
+
+// Tambahkan ini di bawah deklarasi dashboard
+setInterval(async () => {
+    // Hanya update jika halaman dashboard sedang aktif agar hemat resource
+    if (document.getElementById('page-dashboard')?.classList.contains('active')) {
+        await dashboard.refreshData();
+    }
+}, 60000); // 60000 ms = 1 menit
+
