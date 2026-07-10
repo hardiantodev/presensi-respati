@@ -238,10 +238,13 @@ function initializeData() {
     // Company settings
     if (!storage.get('company')) {
         storage.set('company', {
-            name: 'Portal Karyawan',
+            name: 'Sekolah Tinggi Ilmu Kesehatan Respati', // <--- UBAH INI
             logo: ''
         });
     }
+
+
+    
 
     // Shifts
     if (!storage.get('shifts')) {
