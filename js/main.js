@@ -239,7 +239,7 @@ function initializeData() {
     if (!storage.get('company')) {
         storage.set('company', {
             name: 'Sekolah Tinggi Ilmu Kesehatan Respati', // <--- UBAH INI
-            logo: ''
+            logo: 'https://respati-tasikmalaya.ac.id/wp-content/uploads/2026/04/cropped-apple-touch-icon.png'
         });
     }
 
