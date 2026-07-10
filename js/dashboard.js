@@ -24,7 +24,6 @@ const dashboard = {
         try {
             const currentUser = auth.getCurrentUser();
             if (currentUser && currentUser.id) {
-                // Fetch attendance and global settings concurrently
                 const [attResult, settingsRes] = await Promise.all([
                     api.getAttendance(currentUser.id),
                     api.getSettings()
@@ -32,7 +31,6 @@ const dashboard = {
 
                 this.attendanceData = (attResult && attResult.success) ? attResult.data : [];
 
-                // Sync global schedule shift mapping from Admin to this employee's local instance
                 if (settingsRes && settingsRes.success && settingsRes.data) {
                     const globalSettings = settingsRes.data;
                     const loadedSchedules = {};
@@ -89,14 +87,11 @@ const dashboard = {
             iconEl.className = `fas ${icon}`;
         }
 
-        // Update card class for different gradient
         welcomeCard.className = `welcome-card ${className}`;
 
-        // Update shift info
         const shifts = storage.get('shifts', []);
         let currentShiftName = auth.getCurrentUser()?.shift || 'Pagi';
 
-        // Automated shift lookup from admin schedule
         try {
             const userId = String(auth.getCurrentUser()?.id);
             const schedules = storage.get('shift_schedule', {});
@@ -106,16 +101,11 @@ const dashboard = {
             const currentDay = todayObj.getDate();
             const key = `${currentYear}-${currentMonth}`;
 
-            console.log('Dashboard Shift Sync - Key:', key, 'UserId:', userId, 'Day:', currentDay);
-
             if (schedules[key] && schedules[key][userId]) {
                 const assignedShift = schedules[key][userId][currentDay];
-                console.log('Dashboard Shift Sync - Found Shift:', assignedShift);
                 if (assignedShift) {
                     currentShiftName = assignedShift;
                 }
-            } else {
-                console.log('Dashboard Shift Sync - Missing Schedule key or User record.');
             }
         } catch (e) {
             console.error('Error reading shift schedule:', e);
@@ -134,23 +124,17 @@ const dashboard = {
 
     updateStats() {
         const attendance = this.attendanceData;
-
-        // Calculate stats
-        const total = Math.max(26, attendance.length); // Assuming min 26 working days base
+        const total = Math.max(26, attendance.length);
         const present = attendance.filter(a => a.status === 'ontime').length;
         const late = attendance.filter(a => a.status === 'late').length;
         const absent = attendance.filter(a => a.status === 'absent').length;
 
-        // Update donut chart values
         const presentPercent = total > 0 ? Math.round((present / total) * 100) : 0;
-
-        // Update center text
         const donutValue = document.querySelector('.donut-value');
         if (donutValue) {
             donutValue.textContent = `${presentPercent}%`;
         }
 
-        // Update legend
         const legendValues = document.querySelectorAll('.legend-value');
         if (legendValues.length >= 3) {
             legendValues[0].textContent = `${present} hari`;
@@ -160,7 +144,6 @@ const dashboard = {
     },
 
     updateSessionInfo() {
-        // Get today's attendance
         const today = dateTime.getLocalDate();
         const attendance = this.attendanceData;
         const todayAttendance = attendance.find(a => a.date === today);
@@ -191,8 +174,6 @@ const dashboard = {
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
         const currentTime = currentHour + (currentMinute / 60);
-
-        // Assuming 8-hour work day from 8 AM to 5 PM
         const startHour = 8;
         const endHour = 17;
         const totalHours = endHour - startHour;
@@ -204,39 +185,35 @@ const dashboard = {
         if (progressFill) {
             progressFill.style.width = `${progress}%`;
         }
+    },
+
+    // Fungsi baru ditambahkan di dalam objek
+    async refreshData() {
+        console.log("Mengecek pembaruan data...");
+        await this.loadData();
+        this.updateWelcomeCard();
+        this.updateStats();
+        this.updateSessionInfo();
+        this.updateProgressBar();
+        console.log("Dashboard berhasil diperbarui!");
     }
-};
+}; // <--- Tutup objek dashboard di sini
 
 // Global init function called by router
 window.initDashboard = async () => {
     await dashboard.init();
 };
 
-// Auto-update progress every minute
+// Interval untuk auto-update
 setInterval(() => {
     if (document.getElementById('page-dashboard')?.classList.contains('active')) {
         dashboard.updateProgressBar();
     }
 }, 60000);
 
-// Tambahkan ini di dalam objek dashboard
-async refreshData() {
-    console.log("Mengecek pembaruan data...");
-    await this.loadData(); // Ambil data terbaru dari API/Sheet
-    
-    // Perbarui semua elemen UI
-    this.updateWelcomeCard();
-    this.updateStats();
-    this.updateSessionInfo();
-    this.updateProgressBar();
-    console.log("Dashboard berhasil diperbarui!");
-},
-
-// Tambahkan ini di bawah deklarasi dashboard
+// Interval untuk refresh data (60 detik)
 setInterval(async () => {
-    // Hanya update jika halaman dashboard sedang aktif agar hemat resource
     if (document.getElementById('page-dashboard')?.classList.contains('active')) {
         await dashboard.refreshData();
     }
-}, 60000); // 60000 ms = 1 menit
-
+}, 60000);
